@@ -61,3 +61,4 @@ lambda.zip
 *.tfstate*
 .terraform*
 .idea
+dev.tfvars
