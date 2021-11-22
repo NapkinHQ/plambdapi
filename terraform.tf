@@ -1,21 +1,12 @@
 # Variables
-variable "region" {
-  default = "eu-west-1"
-}
+variable "region" {}
 variable "account_id" {}
 variable "s3_bucket" {}
-variable "lambda_name" {
-  default = "plambdapi"
-}
+variable "lambda_role" {}
+variable "lambda_name" {}
 
 provider "aws" {
   region = "${var.region}"
-}
-
-# S3 Bucket
-resource "aws_s3_bucket" "bucket" {
-  bucket = "${var.s3_bucket}"
-  acl = "public-read"
 }
 
 # API Gateway
@@ -64,10 +55,10 @@ resource "aws_lambda_permission" "apigw_lambda" {
 resource "aws_lambda_function" "lambda" {
   filename         = "lambda.zip"
   function_name    = "${var.lambda_name}"
-  role             = "arn:aws:iam::032826422072:role/lambda_basic_execution"
+  role             = "${var.lambda_role}"
   handler          = "lambda.handler"
   runtime          = "python3.6"
-  source_code_hash = "${base64sha256(file("lambda.zip"))}"
+  source_code_hash = "${filebase64sha256("lambda.zip")}"
 
   environment {
     variables = {

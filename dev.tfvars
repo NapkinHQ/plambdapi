@@ -1,0 +1,5 @@
+region = ""
+lambda_name = ""
+lambda_role = ""
+account_id = ""
+s3_bucket = ""
