@@ -40,7 +40,10 @@ data "aws_iam_policy_document" "this" {
   }
   statement {
     actions   = ["s3:*"]
-    resources = ["arn:aws:s3:::${var.s3_bucket}/*"]
+    resources = [
+      "arn:aws:s3:::${var.s3_bucket}",
+      "arn:aws:s3:::${var.s3_bucket}/*"
+    ]
     effect = "Allow"
   }
 }
