@@ -2,11 +2,59 @@
 variable "region" {}
 variable "account_id" {}
 variable "s3_bucket" {}
-variable "lambda_role" {}
 variable "lambda_name" {}
 
 provider "aws" {
   region = "${var.region}"
+}
+
+# IAM Role and Policy
+resource "aws_iam_role" "this" {
+  name               = "${var.lambda_name}"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": "PypiWebServerRole"
+    }
+  ]
+}
+EOF
+}
+
+data "aws_iam_policy_document" "this" {
+  statement {
+    actions   = [
+            "logs:CreateLogGroup",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents"
+    ]
+    resources = ["arn:aws:logs:*:*:*"]
+    effect = "Allow"
+  }
+  statement {
+    actions   = ["s3:*"]
+    resources = ["arn:aws:s3:::${var.s3_bucket}/*"]
+    effect = "Allow"
+  }
+}
+
+resource "aws_iam_policy" "this" {
+  name = "${var.lambda_name}"
+  path = "/"
+  description = "IAM policy PyPi Lambda Web Server"
+  policy = data.aws_iam_policy_document.this.json
+}
+
+resource "aws_iam_role_policy_attachment" "pypi" {
+  role       = aws_iam_role.this.name
+  policy_arn = aws_iam_policy.this.arn
 }
 
 # API Gateway
@@ -55,7 +103,7 @@ resource "aws_lambda_permission" "apigw_lambda" {
 resource "aws_lambda_function" "lambda" {
   filename         = "lambda.zip"
   function_name    = "${var.lambda_name}"
-  role             = "${var.lambda_role}"
+  role             = "${aws_iam_role.this.arn}"
   handler          = "lambda.handler"
   runtime          = "python3.6"
   source_code_hash = "${filebase64sha256("lambda.zip")}"
